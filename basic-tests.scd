@@ -8,12 +8,12 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(1,1).range(0,1),
 		c.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 1 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		1,
 		c.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
@@ -28,16 +28,16 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(100,1).range(0,1),
 		b.bufnum,
-		LFSaw.ar(100,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 100 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		1,
 		b.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
-}.plot()
+}.plot(1)
 )
 
 /// test#3 - aural difference between BufWr and IBufWr
@@ -48,7 +48,7 @@ c.zero;
 
 {
 	var source = SinOsc.ar(200,0,0.05);
-	var write_index = LFSaw.ar(10,1).range(0,s.sampleRate-1);
+	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
 	BufWr.ar(
 		source,
 		b.bufnum,
@@ -62,7 +62,7 @@ c.zero;
 	BufRd.ar(
 		1,
 		[b.bufnum, c.bufnum],
-		LFSaw.ar(10,1).range(0,s.sampleRate-1),
+		write_index,
 		0,
 		1
 	);
@@ -81,12 +81,12 @@ d.zero;
 	IBufWr.ar(
 		LFSaw.ar([1,1.11,1.22,1.33],1).range(0,1),
 		d.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 1 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
 		d.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
@@ -100,12 +100,12 @@ d.zero;
 	IBufWr.ar(
 		LFSaw.ar(1,1).range(0,1),
 		d.bufnum,
-		LFSaw.ar([1,1.11,1.22,1.33],1).range(0,s.sampleRate-1)
+		Phasor.ar(0, [1,1.11,1.22,1.33] , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
 		d.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
@@ -120,12 +120,12 @@ d.zero;
 	IBufWr.ar(
 		LFSaw.ar([10,11.1,12.2,13.3],1).range(0,1),
 		d.bufnum,
-		LFSaw.ar(10,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 10 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
 		d.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
@@ -141,9 +141,9 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(100,1).range(0,1),
 		[b.bufnum,c.bufnum],
-		LFSaw.ar(100,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 100 , 0, s.sampleRate)
 	);
-}.play
+}.plot
 )
 // works writing both
 b.plot;c.plot
@@ -156,9 +156,9 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar([100,200],1).range(0,1),
 		[b.bufnum, c.bufnum],
-		LFSaw.ar(100,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 100 , 0, s.sampleRate)
 	);
-}.play
+}.plot
 )
 
 // test #7 - too many inputs for number of buff channel in
@@ -166,14 +166,14 @@ c.zero;
 d.zero;
 {
 	IBufWr.ar(
-		LFSaw.ar([1,2,3,4,5],1).range(0,1),
+		Phasor.ar(0, [1,2,3,4,5] , 0, s.sampleRate),
 		d.bufnum,
-		LFSaw.ar(10,1).range(0,s.sampleRate-1)
+		Phasor.ar(0, 10 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
 		d.bufnum,
-		LFSaw.ar(1,1).range(0,s.sampleRate-1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		0,
 		1
 	);
@@ -184,8 +184,7 @@ d.zero;
 (
 b.zero;
 {
-	// var head = Phasor.ar(0, 1 , 0, s.sampleRate);
-	var head = LFSaw.ar(1,1).range(0,s.sampleRate-1);
+	var head = Phasor.ar(0, 1 , 0, s.sampleRate);
 	IBufWr.ar(
 		head < 4,
 		b.bufnum,
