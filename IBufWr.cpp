@@ -56,28 +56,31 @@ void IBufWr_Ctor(IBufWr *unit)
 {
   unit->m_fbufnum = -1.f;
 
+  Print("nb of inputs %i\n", unit->mNumInputs);
+
   SETCALC(IBufWr_next);
 
+	ClearUnitOutputs(unit, 1);
 }
 
 void IBufWr_next(IBufWr *unit, int inNumSamples)
 {
   float *phasein  = ZIN(1);
-  int32 loop     = (int32)ZIN0(2);
+  uint32 loop     = (uint32)ZIN0(2);
 
   GET_BUF
-  uint32 numInputChannels = unit->mNumInputs - 3;
+  uint32 numInputChannels = unit->mNumInputs - 3;// minus 3 because the arguments are all passed after the input array
   if (!checkBuffer(unit, bufData, bufChannels, numInputChannels, inNumSamples))
-  return;
+    return;
 
   double loopMax = (double)(bufFrames - (loop ? 0 : 1));
 
-  for (int32 k=0; k<inNumSamples; ++k) {
+  for (uint32 k=0; k<inNumSamples; ++k) {
     double phase = sc_loop((Unit*)unit, ZXP(phasein), loopMax, loop);
     int32 iphase = (int32)phase;
     float* table0 = bufData + iphase * bufChannels;
     for (uint32 channel=0; channel<numInputChannels; ++channel)
-    table0[channel] = IN(channel+3)[k];
+      table0[channel] = IN(channel+3)[k];
   }
 }
 
