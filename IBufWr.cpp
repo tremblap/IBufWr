@@ -25,28 +25,36 @@ static inline bool checkBuffer(Unit * unit, const float * bufData, uint32 bufCha
   return false;
 }
 
-struct IBufWr : public Unit
-{
+struct IBufWr : public Unit {
   float m_fbufnum;
   SndBuf *m_buf;
+  double *valeurs;
 };
 
 void IBufWr_Ctor(IBufWr *unit);
+void IBufWr_Dtor(IBufWr *unit);
 void IBufWr_next(IBufWr *unit, int inNumSamples);
 
-void IBufWr_Ctor(IBufWr *unit)
-{
-  unit->m_fbufnum = -1.f;//declares the unit buf num as unasigned (<0)
+void IBufWr_Ctor(IBufWr *unit) {
+  //declares the unit buf num as unasigned (<0)
+  unit->m_fbufnum = -1.f;
 
-  Print("nb of inputs %i\n", unit->mNumInputs);
+  //defines the counters and initialise them to 0
+  unit->valeurs = (double *)RTAlloc(unit->mWorld, ((unit->mNumInputs - 2) * sizeof(double)));
+  memset(unit->valeurs,0,((unit->mNumInputs - 2) * sizeof(double)));
 
+  // defines the ugen in the tree
   SETCALC(IBufWr_next);
 
+  // sends one sample of silence
   ClearUnitOutputs(unit, 1);
 }
 
-void IBufWr_next(IBufWr *unit, int inNumSamples)
-{
+void IBufWr_Dtor(IBufWr *unit){
+  RTFree(unit->mWorld, unit->valeurs);
+}
+
+void IBufWr_next(IBufWr *unit, int inNumSamples) {
   float *phasein  = IN(1);// instead of ZIN which was coping with the offset
 
   GET_BUF //this macro, defined in  SC_Unit.h, does all the sanity check, locks the buffer and assigns valutes to bufData, bufChannels, numInputChannels, bufFrames
@@ -70,5 +78,5 @@ void IBufWr_next(IBufWr *unit, int inNumSamples)
 
 PluginLoad(IButtUGens) {
   ft = inTable;
-  DefineSimpleUnit(IBufWr);
+  DefineDtorUnit(IBufWr);
 }
