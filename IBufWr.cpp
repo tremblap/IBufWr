@@ -66,13 +66,11 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
 
   //iterates through the input samples
   for (uint32 k=0; k<inNumSamples; ++k) {
-    // this clips the index to the buffer size in frames. then casts it as int32
-    int32 iphase = (int32)CLIP(phasein[k],0,(bufFrames-1));
-    // defines a 'table' which is a simple float pointer as a facilitator for pointer arythmetics, using the index (iphase) multipled by the number of channels in the buffer (the data is interleaved)
-    float* table0 = bufData + iphase * bufChannels;
-    // iterator for the width of the input array/stream
-    for (uint32 channel=0; channel<numInputChannels; ++channel)
-      table0[channel] = IN(channel+2)[k];// adds 2 to offset the 2 arguments
+    // for each channel of the input array, increments the counter with the input, and writes it a buffer index 0+channel
+    for (uint32 channel=0; channel<numInputChannels; ++channel) {
+      unit->valeurs[channel] += IN(channel+2)[k];// adds 2 to offset the 2 arguments
+      bufData[channel] = unit->valeurs[channel];
+    }
   }
 }
 
