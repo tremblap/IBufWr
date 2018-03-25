@@ -28,7 +28,10 @@ static inline bool checkBuffer(Unit * unit, const float * bufData, uint32 bufCha
 struct IBufWr : public Unit {
   float m_fbufnum;
   SndBuf *m_buf;
-  double *valeurs;
+
+  long l_index_precedent;
+  long l_nb_val;
+  double *l_valeurs;
 };
 
 void IBufWr_Ctor(IBufWr *unit);
@@ -40,8 +43,11 @@ void IBufWr_Ctor(IBufWr *unit) {
   unit->m_fbufnum = -1.f;
 
   //defines the counters and initialise them to 0
-  unit->valeurs = (double *)RTAlloc(unit->mWorld, ((unit->mNumInputs - 2) * sizeof(double)));
-  memset(unit->valeurs,0,((unit->mNumInputs - 2) * sizeof(double)));
+  unit->l_valeurs = (double *)RTAlloc(unit->mWorld, ((unit->mNumInputs - 2) * sizeof(double)));
+  memset(unit->l_valeurs,0,((unit->mNumInputs - 2) * sizeof(double)));
+
+  //initialise the other instance variables
+  unit->l_index_precedent = -1;
 
   // defines the ugen in the tree
   SETCALC(IBufWr_next);
@@ -51,14 +57,16 @@ void IBufWr_Ctor(IBufWr *unit) {
 }
 
 void IBufWr_Dtor(IBufWr *unit){
-  RTFree(unit->mWorld, unit->valeurs);
+  RTFree(unit->mWorld, unit->l_valeurs);
 }
 
 void IBufWr_next(IBufWr *unit, int inNumSamples) {
-  float *phasein  = IN(1);// instead of ZIN which was coping with the offset
+  float *phasein  = IN(1);
+  bool l_interp = (bool)IN0(2);
+  double l_overdub = (float)IN0(3);
 
   GET_BUF //this macro, defined in  SC_Unit.h, does all the sanity check, locks the buffer and assigns valutes to bufData, bufChannels, numInputChannels, bufFrames
-  uint32 numInputChannels = unit->mNumInputs - 2;// minus 2 because the arguments are all passed after the input array
+  uint32 numInputChannels = unit->mNumInputs - 4;// minus 4 because the arguments are all passed after the input array
 
   // other sanity check, mostly of size
   if (!checkBuffer(unit, bufData, bufChannels, numInputChannels, inNumSamples))
@@ -72,7 +80,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
     float* table0 = bufData + iphase * bufChannels;
     // iterator for the width of the input array/stream
     for (uint32 channel=0; channel<numInputChannels; ++channel)
-      table0[channel] = IN(channel+2)[k];// adds 2 to offset the 2 arguments
+      table0[channel] = IN(channel+4)[k];// adds 2 to offset the 2 arguments
   }
 }
 
