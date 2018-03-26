@@ -8,7 +8,8 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(1,1).range(0,1),
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate)
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+		1
 	);
 	BufRd.ar(
 		1,
@@ -17,18 +18,20 @@ c.zero;
 		0,
 		1
 	);
-}.plot(1)
+}.plot(129/44100)
 )
+c.getn(0,10, {|msg| msg.postln});
 
 /// test number 2
 //write at 100 times the speed values from 0 to 1, and play at single time
 (
-c.zero;
+b.zero;
 {
 	IBufWr.ar(
-		LFSaw.ar(100,1).range(0,1),
+		Phasor.ar(0, 100 , 0, s.sampleRate),
 		b.bufnum,
-		Phasor.ar(0, 100 , 0, s.sampleRate)
+		Phasor.ar(0, 100 , 0, s.sampleRate),
+		0
 	);
 	BufRd.ar(
 		1,
@@ -37,8 +40,9 @@ c.zero;
 		0,
 		1
 	);
-}.plot(1)
+}.plot(129/44100)
 )
+b.getn(95,10, {|msg| msg.postln});
 
 /// test#3 - aural difference between BufWr and IBufWr
 // all looks fine-ish on both sides

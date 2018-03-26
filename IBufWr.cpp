@@ -56,10 +56,8 @@ void IBufWr_Ctor(IBufWr *unit) {
 
   //initialise the other instance variables
   unit->l_index_precedent = -1;
-  unit->l_nb_val = 0;
 
   Print("nb of inputs %i\n", unit->mNumInputs);
-  Print("nb_val %i\n", unit->l_nb_val);
 
   // defines the ugen in the tree
   SETCALC(IBufWr_next);
@@ -105,6 +103,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
   int nc = numInputChannels;
   int chan = 0;
   float *tab = bufData;
+  frames = bufFrames;
 
   if (overdub != 0.)
   {
