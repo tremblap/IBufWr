@@ -193,3 +193,47 @@ b.zero;
 }.plot()
 )
 b.getn(0,10, {|msg| msg.postln});
+
+//benchmarking against BufWr (non conclusive, see thread)
+(
+~y= {arg buf; Main.elapsedTime.postln; {
+	var source = SinOsc.ar(200,0,0.05);
+	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
+	Main.elapsedTime.postln;
+	BufWr.ar(
+		source,
+		buf.bufnum,
+		write_index
+	);
+	BufRd.ar(
+		1,
+		buf.bufnum,
+		write_index,
+		0,
+		1
+	);
+}.play
+}
+)
+fork{ 5.do{ Main.elapsedTime.postln; ~y.(b); 0.5.wait } }
+
+(
+SynthDef(\testBufWr,{
+	var source = SinOsc.ar(200,0,0.0001);
+	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
+	IBufWr.ar(
+		source,
+		b.bufnum,
+		write_index
+	);
+	Out.ar(0,BufRd.ar(
+		1,
+		b.bufnum,
+		write_index,
+		0,
+		1
+	));
+}).send
+)
+
+1000.do({Synth(\testBufWr)})
