@@ -57,7 +57,7 @@ c.zero;
 	IBufWr.ar(
 		source,
 		c.bufnum,
-		write_index
+		write_index,0,0.955 //with overdub
 	);
 	BufRd.ar(
 		1,
@@ -203,7 +203,7 @@ SynthDef(\testBufWr,{
 	IBufWr.ar(
 		source,
 		b.bufnum,
-		write_index
+		write_index,0,0
 	);
 	Out.ar(0,BufRd.ar(
 		1,
