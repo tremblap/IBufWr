@@ -44,7 +44,7 @@ struct IBufWr : public Unit {
 
 void IBufWr_Ctor(IBufWr *unit);
 void IBufWr_Dtor(IBufWr *unit);
-void IBufWr_next(IBufWr *unit, int inNumSamples);
+void IBufWr_next(IBufWr *unit, int n);
 
 void IBufWr_Ctor(IBufWr *unit) {
   //declares the unit buf num as unasigned (<0)
@@ -70,25 +70,26 @@ void IBufWr_Dtor(IBufWr *unit){
   RTFree(unit->mWorld, unit->l_valeurs);
 }
 
-void IBufWr_next(IBufWr *unit, int inNumSamples) {
+void IBufWr_next(IBufWr *unit, int n) {
   float *inind  = IN(1);
   bool interp = (bool)(IN0(2));
   double overdub = (double)(IN0(3));
 
   GET_BUF //this macro, defined in  SC_Unit.h, does all the sanity check, locks the buffer and assigns valutes to bufData, bufChannels, bufFrames
-  uint32 numInputChannels = unit->mNumInputs - 4;// minus 4 because the arguments are all passed after the input array
+  uint32 nc = unit->mNumInputs - 4;// minus 4 because the arguments are all passed after the input array
 
   // other sanity check, mostly of size
-  if (!checkBuffer(unit, bufData, bufChannels, numInputChannels, inNumSamples))
+  if (!checkBuffer(unit, bufData, bufChannels, nc, n))
     return;
 
   // taken from ipoke~, with the following replacements
   // remove all the headers
-  // replace frames by bufFrames in demivie
+  // replace frames by bufFrames partout
   // valeur temporarily become valeurs[0]
 
-  double valeur_entree, valeur, index_tampon, coeff;
-  long frames, nb_val, index, index_precedent, pas, i;
+  float valeur_entree, valeur;
+  double index_tampon, coeff;
+  long nb_val, index, index_precedent, pas, i;
   bool dirty_flag = false;
 
   double demivie = (long)(bufFrames * 0.5);
@@ -99,11 +100,8 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
 
   //temporary to check 1 input
   float *inval = IN(4);
-  int n = inNumSamples;
-  int nc = numInputChannels;
   int chan = 0;
   float *tab = bufData;
-  frames = bufFrames;
 
   if (overdub != 0.)
   {
@@ -126,7 +124,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
               }
               else
               {
-                  index = wrap_index((long)(index_tampon + 0.5),frames);        // round the next index and make sure he is in the buffer's boundaries
+                  index = wrap_index((long)(index_tampon + 0.5),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
 
                   if (index_precedent < 0)                                    // if it is the first index to write, resets the averaging and the values
                   {
@@ -156,7 +154,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if (pas > demivie)                                    // is it faster to go the other way round?
                           {
-                              pas -= frames;                                    // calculate the new number of steps
+                              pas -= bufFrames;                                    // calculate the new number of steps
                               coeff = (valeur_entree - valeur) / pas;            // calculate the interpolation coefficient
 
                               for(i=(index_precedent-1);i>=0;i--)                    // fill the gap to zero
@@ -164,7 +162,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                                   valeur -= coeff;
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
                               }
-                              for(i=(frames-1);i>index;i--)                        // fill the gap from the top
+                              for(i=(bufFrames-1);i>index;i--)                        // fill the gap from the top
                               {
                                   valeur -= coeff;
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
@@ -184,10 +182,10 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if ((-pas) > demivie)                                // is it faster to go the other way round?
                           {
-                              pas += frames;                                    // calculate the new number of steps
+                              pas += bufFrames;                                    // calculate the new number of steps
                               coeff = (valeur_entree - valeur) / pas;            // calculate the interpolation coefficient
 
-                              for(i=(index_precedent+1);i<frames;i++)            // fill the gap to the top
+                              for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                               {
                                   valeur += coeff;
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
@@ -234,7 +232,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
               }
               else
               {
-                  index = wrap_index((long)(index_tampon + 0.5),frames);            // round the next index and make sure he is in the buffer's boundaries
+                  index = wrap_index((long)(index_tampon + 0.5),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
 
                   if (index_precedent < 0)                                    // if it is the first index to write, resets the averaging and the values
                   {
@@ -266,7 +264,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                           {
                               for(i=(index_precedent-1);i>=0;i--)                // fill the gap to zero
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
-                              for(i=(frames-1);i>index;i--)                    // fill the gap from the top
+                              for(i=(bufFrames-1);i>index;i--)                    // fill the gap from the top
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
                           }
                           else                                                // if not, just fill the gaps
@@ -279,7 +277,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if ((-pas) > demivie)                                // is it faster to go the other way round?
                           {
-                              for(i=(index_precedent+1);i<frames;i++)            // fill the gap to the top
+                              for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
                               for(i=0;i<index;i++)                            // fill the gap from zero
                                   tab[i * nc + chan] = (tab[i * nc + chan] * overdub) + valeur;
@@ -319,7 +317,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
               }
               else
               {
-                  index = wrap_index((long)(index_tampon + 0.5),frames);        // round the next index and make sure he is in the buffer's boundaries
+                  index = wrap_index((long)(index_tampon + 0.5),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
 
                   if (index_precedent < 0)                                    // if it is the first index to write, resets the averaging and the values
                   {
@@ -349,7 +347,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if (pas > demivie)                                    // is it faster to go the other way round?
                           {
-                              pas -= frames;                                    // calculate the new number of steps
+                              pas -= bufFrames;                                    // calculate the new number of steps
                               coeff = (valeur_entree - valeur) / pas;            // calculate the interpolation coefficient
 
                               for(i=(index_precedent-1);i>=0;i--)                    // fill the gap to zero
@@ -357,7 +355,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                                   valeur -= coeff;
                                   tab[i * nc + chan] = valeur;
                               }
-                              for(i=(frames-1);i>index;i--)                        // fill the gap from the top
+                              for(i=(bufFrames-1);i>index;i--)                        // fill the gap from the top
                               {
                                   valeur -= coeff;
                                   tab[i * nc + chan] = valeur;
@@ -377,10 +375,10 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if ((-pas) > demivie)                                // is it faster to go the other way round?
                           {
-                              pas += frames;                                    // calculate the new number of steps
+                              pas += bufFrames;                                    // calculate the new number of steps
                               coeff = (valeur_entree - valeur) / pas;            // calculate the interpolation coefficient
 
-                              for(i=(index_precedent+1);i<frames;i++)            // fill the gap to the top
+                              for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                               {
                                   valeur += coeff;
                                   tab[i * nc + chan] = valeur;
@@ -427,7 +425,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
               }
               else
               {
-                  index = wrap_index((long)(index_tampon + 0.5),frames);            // round the next index and make sure he is in the buffer's boundaries
+                  index = wrap_index((long)(index_tampon + 0.5),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
 
                   if (index_precedent < 0)                                    // if it is the first index to write, resets the averaging and the values
                   {
@@ -459,7 +457,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                           {
                               for(i=(index_precedent-1);i>=0;i--)                // fill the gap to zero
                                   tab[i * nc + chan] = valeur;
-                              for(i=(frames-1);i>index;i--)                    // fill the gap from the top
+                              for(i=(bufFrames-1);i>index;i--)                    // fill the gap from the top
                                   tab[i * nc + chan] = valeur;
                           }
                           else                                                // if not, just fill the gaps
@@ -472,7 +470,7 @@ void IBufWr_next(IBufWr *unit, int inNumSamples) {
                       {
                           if ((-pas) > demivie)                                // is it faster to go the other way round?
                           {
-                              for(i=(index_precedent+1);i<frames;i++)            // fill the gap to the top
+                              for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                                   tab[i * nc + chan] = valeur;
                               for(i=0;i<index;i++)                            // fill the gap from zero
                                   tab[i * nc + chan] = valeur;

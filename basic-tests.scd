@@ -31,7 +31,7 @@ b.zero;
 		Phasor.ar(0, 100 , 0, s.sampleRate),
 		b.bufnum,
 		Phasor.ar(0, 100 , 0, s.sampleRate),
-		0
+		1
 	);
 	BufRd.ar(
 		1,
@@ -203,11 +203,12 @@ b.getn(0,10, {|msg| msg.postln});
 (
 SynthDef(\testBufWr,{
 	var source = SinOsc.ar(200,0,0.0001);
-	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
+	var write_index = Phasor.ar(0, 1 , 0, s.sampleRate);
 	IBufWr.ar(
 		source,
 		b.bufnum,
-		write_index
+		write_index,
+		0
 	);
 	Out.ar(0,BufRd.ar(
 		1,
@@ -219,4 +220,5 @@ SynthDef(\testBufWr,{
 }).send
 )
 
-1000.do({Synth(\testBufWr)})
+b.zero
+500.do({Synth(\testBufWr)})
