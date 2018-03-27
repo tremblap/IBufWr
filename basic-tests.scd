@@ -8,9 +8,7 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(1,1).range(0,1),
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 1 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		1,
@@ -31,9 +29,7 @@ b.zero;
 	IBufWr.ar(
 		Phasor.ar(0, 1 , 0, s.sampleRate),
 		b.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 1 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		1,
@@ -63,9 +59,7 @@ c.zero;
 	IBufWr.ar(
 		source,
 		c.bufnum,
-		write_index,
-		0,
-		0.98
+		write_index
 	);
 	BufRd.ar(
 		1,
@@ -89,9 +83,7 @@ d.zero;
 	IBufWr.ar(
 		LFSaw.ar([1,1.11,1.22,1.33],1).range(0,1),
 		d.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 1 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
@@ -110,9 +102,7 @@ d.zero;
 	IBufWr.ar(
 		Phasor.ar(0, 1 , 0, s.sampleRate),
 		d.bufnum,
-		Phasor.ar(0, [1,1.11,1.22,1.33] , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, [1,1.11,1.22,1.33] , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
@@ -132,9 +122,7 @@ d.zero;
 	IBufWr.ar(
 		Phasor.ar(0, [1,1.1,2.2,3.3], 0, s.sampleRate),
 		d.bufnum,
-		Phasor.ar(0, 10, 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 10, 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
@@ -156,9 +144,7 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar(100,1).range(0,1),
 		[b.bufnum,c.bufnum],
-		Phasor.ar(0, 100 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 100 , 0, s.sampleRate)
 	);
 }.plot
 )
@@ -173,9 +159,7 @@ c.zero;
 	IBufWr.ar(
 		LFSaw.ar([100,200],1).range(0,1),
 		[b.bufnum, c.bufnum],
-		Phasor.ar(0, 100 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 100 , 0, s.sampleRate)
 	);
 }.plot
 )
@@ -187,9 +171,7 @@ d.zero;
 	IBufWr.ar(
 		Phasor.ar(0, [1,2,3,4,5] , 0, s.sampleRate),
 		d.bufnum,
-		Phasor.ar(0, 10 , 0, s.sampleRate),
-		0,
-		0.1
+		Phasor.ar(0, 10 , 0, s.sampleRate)
 	);
 	BufRd.ar(
 		4,
@@ -209,9 +191,7 @@ b.zero;
 	IBufWr.ar(
 		head < 4,
 		b.bufnum,
-		head,
-		0,
-		0.1
+		head
 	);
 }.plot()
 )
@@ -226,9 +206,7 @@ SynthDef(\testBufWr,{
 	IBufWr.ar(
 		source,
 		b.bufnum,
-		write_index,
-		0,
-		0.1
+		write_index
 	);
 	Out.ar(0,BufRd.ar(
 		1,
