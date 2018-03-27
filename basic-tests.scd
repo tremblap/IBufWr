@@ -9,7 +9,7 @@ c.zero;
 		LFSaw.ar(1,1).range(0,1),
 		c.bufnum,
 		Phasor.ar(0, 1 , 0, s.sampleRate),
-		1
+		0
 	);
 	BufRd.ar(
 		1,
@@ -28,10 +28,10 @@ c.getn(0,10, {|msg| msg.postln});
 b.zero;
 {
 	IBufWr.ar(
-		Phasor.ar(0, 100 , 0, s.sampleRate),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		b.bufnum,
-		Phasor.ar(0, 100 , 0, s.sampleRate),
-		1
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+		0
 	);
 	BufRd.ar(
 		1,
@@ -42,7 +42,7 @@ b.zero;
 	);
 }.plot(129/44100)
 )
-b.getn(95,10, {|msg| msg.postln});
+b.getn(0,129, {|msg| msg.postln});
 
 /// test#3 - aural difference between BufWr and IBufWr
 // all looks fine-ish on both sides
@@ -61,7 +61,8 @@ c.zero;
 	IBufWr.ar(
 		source,
 		c.bufnum,
-		write_index
+		write_index,
+		0
 	);
 	BufRd.ar(
 		1,
@@ -85,7 +86,8 @@ d.zero;
 	IBufWr.ar(
 		LFSaw.ar([1,1.11,1.22,1.33],1).range(0,1),
 		d.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate)
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+		0
 	);
 	BufRd.ar(
 		4,
@@ -102,9 +104,10 @@ d.zero;
 d.zero;
 {
 	IBufWr.ar(
-		LFSaw.ar(1,1).range(0,1),
+		Phasor.ar(0, 1 , 0, s.sampleRate),
 		d.bufnum,
-		Phasor.ar(0, [1,1.11,1.22,1.33] , 0, s.sampleRate)
+		Phasor.ar(0, [1,1.11,1.22,1.33] , 0, s.sampleRate),
+		0
 	);
 	BufRd.ar(
 		4,
@@ -122,9 +125,10 @@ d.zero;
 d.zero;
 {
 	IBufWr.ar(
-		LFSaw.ar([10,11.1,12.2,13.3],1).range(0,1),
+		Phasor.ar(0, [1,1.1,2.2,3.3], 0, s.sampleRate),
 		d.bufnum,
-		Phasor.ar(0, 10 , 0, s.sampleRate)
+		Phasor.ar(0, 10, 0, s.sampleRate),
+		0
 	);
 	BufRd.ar(
 		4,
@@ -133,8 +137,9 @@ d.zero;
 		0,
 		1
 	);
-}.plot(1)
+}.plot(129/s.sampleRate)
 )
+d.getn(0,50, {|msg| msg.postln});
 
 //test #6 - trying arrays of buffers
 // this should work
