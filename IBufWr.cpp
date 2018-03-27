@@ -88,13 +88,14 @@ void IBufWr_next(IBufWr *unit, int n) {
     return;
 
   // taken from ipoke~, with the following replacements
-  // remove all the headers
+  // remove all the headers, remove dirty_flag
   // replace frames by bufFrames partout
   // change all valeur_entree with a loop to go through all chan = valeur[chan] += IN(chan+4)[j];
+  // change while loops to iterate j
+  // remove tab and change to bufData, iterating through inputs
 
   double *valeur, *coeff, index_tampon;
   long nb_val, index, index_precedent, pas, i, chan, j;
-  bool dirty_flag = false;
 
   double demivie = (long)(bufFrames * 0.5);
 
@@ -121,7 +122,6 @@ void IBufWr_next(IBufWr *unit, int n) {
       //                 tab[index_precedent * nc + chan] = (tab[index_precedent * nc + chan] * overdub) + (valeur/nb_val);        // write the average value at the last given index
       //                 valeur = 0.0;
       //                 index_precedent = -1;
-      //                 dirty_flag = true;
       //             }
       //         }
       //         else
@@ -148,7 +148,6 @@ void IBufWr_next(IBufWr *unit, int n) {
       //                 }
       //
       //                 tab[index_precedent * nc + chan] = (tab[index_precedent * nc + chan] * overdub) + valeur;                // write the average value at the last index
-      //                 dirty_flag = true;
       //
       //                 pas = index - index_precedent;                            // calculate the step to do
       //
@@ -231,7 +230,6 @@ void IBufWr_next(IBufWr *unit, int n) {
                       valeur[chan] = 0.0;
                     }
                     index_precedent = -1;
-                    dirty_flag = true;
                   }
               }
               else
@@ -261,7 +259,6 @@ void IBufWr_next(IBufWr *unit, int n) {
 
                       for(chan = 0; chan < nc;chan++)
                         bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * overdub) + valeur[chan];                // write the average value at the last index
-                      dirty_flag = true;
 
                       pas = index - index_precedent;                            // calculate the step to do
 
@@ -327,7 +324,6 @@ void IBufWr_next(IBufWr *unit, int n) {
                       valeur[chan] = 0.0;
                     }
                     index_precedent = -1;
-                    dirty_flag = true;
                   }
               }
               else
@@ -357,7 +353,6 @@ void IBufWr_next(IBufWr *unit, int n) {
 
                       for(chan = 0; chan < nc;chan++)
                         bufData[index_precedent * bufChannels + chan] = valeur[chan];   // write the average value at the last index
-                      dirty_flag = true;
 
                       pas = index - index_precedent;                            // calculate the step to do
 
@@ -450,7 +445,6 @@ void IBufWr_next(IBufWr *unit, int n) {
                         valeur[chan] = 0.0;
                       }
                       index_precedent = -1;
-                      dirty_flag = true;
                   }
               }
               else
@@ -480,7 +474,6 @@ void IBufWr_next(IBufWr *unit, int n) {
 
                       for(chan = 0; chan < nc;chan++)
                         bufData[index_precedent * bufChannels + chan] = valeur[chan];   // write the average value at the last index
-                      dirty_flag = true;
 
                       pas = index - index_precedent;                            // calculate the step to do
 
