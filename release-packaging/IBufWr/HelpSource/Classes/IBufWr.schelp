@@ -1,0 +1,271 @@
+class:: IBufWr
+summary:: An Interpolating Buffer Writer.
+categories:: UGens>Buffer
+related:: Classes/BufRd, Classes/BufWr, Guides/BufferWritingGuide
+
+DESCRIPTION::
+An interpolating buffer writer, ported from the bespoke Max external ipoke~. footnote::
+ipoke~ v4.1 (http://www.no-tv.org/MaxMSP/). This port was made possible thanks to the FluCoMa project (http://www.flucoma.org/) funded by the European Research Council (https://erc.europa.eu/) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 725899).:: It expects similar rates for the value input(s) and the index input (phase).
+
+The index input has the following behaviour: negative values stop the writing, jumped indices will be filled by the values at the last index (interp 0) or ramped (interp 1). Increments of less than one will result in averaging all the values at that index once changing index.
+
+note:: IBufWr (like his sibling link::Classes/BufWr::, and unlike link::Classes/BufRd::) does not do multichannel expansion, because the value input is an array. ::
+
+CLASSMETHODS::
+
+METHOD:: kr
+Control rate writing. Each value of the input array will be written to its respective buffer channel, at the index provided in the phase input.
+
+ARGUMENT:: inputArray
+Values to be written at the given index. This can be an array no greater than the length of the buffer channel count.
+
+ARGUMENT:: bufnum
+The buffer number. It be changed at kr.
+
+ARGUMENT:: phase
+Control rate input for the index at which the values have to be written. These are wrapped around the size of the buffer should they go above. Negative values will suspend the writing process.
+
+ARGUMENT:: interp
+The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 uses a linear interpolation of each value between indices. This can be changed at kr.
+
+ARGUMENT:: overdub
+The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
+
+returns:: nothing
+
+METHOD:: ar
+Audio rate writing. Each value of the input array will be written to its respective buffer channel, at the index provided in the phase input.
+
+ARGUMENT:: inputArray
+Values to be written at the given index. This can be an array no greater than the length of the buffer channel count.
+
+ARGUMENT:: bufnum
+The buffer number. It be changed at kr.
+
+ARGUMENT:: phase
+Audio rate input for the index at which the values have to be written. These are wrapped around the size of the buffer should they go above. Negative values will suspend the writing process.
+
+ARGUMENT:: interp
+The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 uses a linear interpolation of each value between indices. This can be changed at kr.
+
+ARGUMENT:: overdub
+The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
+
+returns:: nothing
+
+
+INSTANCEMETHODS::
+
+METHOD:: checkInputs
+This makes sure the value and phase inputs are both at audio rate.
+
+returns:: A slap on the wrist, should it not be the case.
+
+
+EXAMPLES::
+
+For a more detailed explanation and thorough justification of the usefulness of this object, please see the extensive link::Guides/BufferWritingGuide::
+
+STRONG:: Basic Usage: Comparing BufWr and IBufwr::
+
+code::
+(
+// define 2 small buffers
+b = Buffer.alloc(s, s.sampleRate);
+c = Buffer.alloc(s, s.sampleRate);
+)
+
+(
+// zero them in case they were not
+b.zero;
+c.zero;
+// write both of them at 10x real time, read at 10x real time
+{
+	var source = SinOsc.ar(200,0,0.05);
+	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
+	BufWr.ar(
+		source,
+		b.bufnum,
+		write_index
+	);
+	IBufWr.ar(
+		source,
+		c.bufnum,
+		write_index
+	);
+	BufRd.ar(
+		1,
+		[b.bufnum, c.bufnum],
+		write_index,
+		0,
+		1 // no interpolation
+	);
+}.plot(1)
+)
+
+// it looks ok, but look at the buffers in detail
+// the skipped indices are all 0
+b.getn(0,31, {|msg| msg.postln});
+// much nicer here - by default linearly interpolated
+c.getn(0,31, {|msg| msg.postln});
+
+//playing at the same speed is ok if you are lucky enough to fall on the written index
+{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 10 , 0, s.sampleRate),0,1)}.play
+
+// but it gets nasty if you change the speed of playback
+{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 9 , 0, s.sampleRate),0,1)}.play
+
+::
+
+
+STRONG:: A More Musical Example: Emulating a Resampling Digital Delay::
+
+code::
+//create a one second buffer
+b = Buffer.alloc(s, s.sampleRate);
+
+// design a fun source
+(
+p = Platform.resourceDir +/+ "sounds/a11wlk01.wav";
+d = Buffer.read(s, p);
+)
+
+// play it
+x = d.play(true, 0.1)
+
+// add a basic delay after, no feedback, 6dB lower
+(
+y = {arg gain = 0.5, dur = 1, feedback = 0, interp = 0;
+	var delout, index;
+	index = Phasor.ar(0, dur.reciprocal, 0, s.sampleRate);
+	delout = BufRd.ar(1,b.bufnum,index,0,1);
+	IBufWr.ar(In.ar(0,1) * gain, b.bufnum, index, interp, feedback);
+	[0, delout]}.play(addAction:'addToTail');
+)
+
+// add basic feedback
+y.set(\feedback, 0.5)
+
+// change the duration (notice you don't hear the spike in pitch being looped)
+y.set(\dur, 0.5)
+y.set(\dur, 2)
+y.set(\dur, 1)
+
+// kill the input gain and enjoy the tail
+y.set(\gain, 0)
+
+// set the feedback to unity
+y.set(\feedback, 1)
+
+// send sparingly to what is now a dirty looper
+y.set(\gain, 0.5)
+y.set(\gain, 0)
+
+// change the length/pitch/speed
+y.set(\dur, 0.5)
+y.set(\dur, 2)
+y.set(\dur, 1)
+
+// a little overdub at another speed maybe
+y.set(\gain, 0.1)
+y.set(\gain, 0)
+
+//  kill the source, set the feedback a little less than unity, enjoy the decay
+x.free
+y.set(\feedback, 0.8)
+
+// free the delay
+y.free
+b.free
+::
+
+STRONG:: Yet Another Musical Example: Processing Within the Feedback Loop::
+
+code::
+//create a one second buffer
+b = Buffer.alloc(s, s.sampleRate);
+
+// design a fun source
+(
+p = Platform.resourceDir +/+ "sounds/a11wlk01.wav";
+d = Buffer.read(s, p);
+)
+
+// play it
+x = d.play(true, 0.1)
+
+// add a basic delay after using the built-in DelayN, 6dB lower -- feedbback does not work, needs a block delay (InFeedback)
+y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),0.2,0.2)]}.play(addAction:'addToTail')
+
+
+// so free that
+y.free
+
+// this new attempt works a little better, using the built-in BufWr
+(
+b.zero;
+
+y = {
+	arg gain = 1, dur = 1, feedback = 0.7, freq=2000;
+	var delout, index;
+    index = Phasor.ar(0, dur.reciprocal, 0, s.sampleRate);
+	delout = BufRd.ar(1, b.bufnum, index,0,1);
+	BufWr.ar(BPF.ar((In.ar(0) * gain) + (delout * feedback),freq,1), b.bufnum, index);
+	[0,delout];
+}.play(addAction:'addToTail')
+)
+
+// ...but gets nasty when the duration is changed
+y.set(\dur, 2.111)
+x.free
+
+y.free
+b.zero;
+
+// this works better using IBufWr
+(
+x = d.play(true, 0.1);
+
+y = {
+	arg gain = 1, dur = 1, feedback = 0.7, interp = 1, freq=2000, lag = 0;
+	var delout, index;
+	index = Phasor.ar(0, Ramp.kr(dur.reciprocal,lag), 0, s.sampleRate);
+	delout = BufRd.ar(1, b.bufnum, index,0,1);
+	IBufWr.ar(BPF.ar((In.ar(0) * gain) + (delout * feedback),freq,1),b.bufnum,index,interp);
+	[0,delout];
+}.play(addAction:'addToTail')
+)
+
+// much better!
+y.set(\dur, 2.111)
+
+// and more fun - set a 400 ms filtered looper
+y.set(\gain, 0);
+y.set(\feedback, 1);
+y.set(\dur, 0.4);
+
+// send some stuff in, then cut the source
+y.set(\gain, 1);
+y.set(\gain, 0);
+
+// fun but abrupt
+y.set(\dur, 0.8)
+
+// with smoothing
+(
+y.set(\gain, 1);
+y.set(\lag, 0.4);
+y.set(\dur, 0.2);
+y.set(\feedback, 0.7);
+)
+
+// cool stop!
+(
+y.set(\feedback, 0.9);
+y.set(\lag, 2);
+y.set(\dur, 2);
+x.free
+)
+
+y.free
+::

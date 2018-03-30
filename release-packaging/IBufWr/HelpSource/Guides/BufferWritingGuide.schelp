@@ -1,0 +1,191 @@
+title:: Buffer Writing Guide
+summary:: This section illustrates some case uses of writing to buffers
+categories:: UGens>Buffer
+related:: Classes/BufRd, Classes/BufWr, Classes/IBufWr
+
+description::
+
+This section is a complement to the helpfiles of link::Classes/BufWr:: and link::Classes/IBufWr::, covering specific behaviours of both UGens.
+
+subsection:: Multichannel Inputs to a Single Index
+
+Both link::Classes/BufWr:: and link::Classes/IBufWr:: behave the same way, which is to NOT multichannel expand its input, instead passing the input array as is to the UGen. What that means is that the first input can be an array of up to the same size as the number of channels in the buffer it points to. The index (phase) of the buffer these values will be written to is the same for all.
+
+strong::Example 1: Basic Stereo Buffer Writing::
+code::
+// allocate a stereo buffer
+c = Buffer.alloc(s, s.sampleRate,2);
+
+(
+{
+	BufWr.ar( // built-in buffer writer, since we won't skip indices
+		Phasor.ar(0, [1, 0.5] , 0, s.sampleRate), // basic source, multichannel expanded to 2 different ramps
+		c.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+	);
+	BufRd.ar(
+		2,
+		c.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),// reading at one sample per sample
+		0,
+		1
+	);
+}.plot(0.1)
+)
+::
+
+strong::Example 2: Common Error, too large an input array::
+code::
+// allocate a stereo buffer
+c = Buffer.alloc(s, s.sampleRate,2);
+
+(
+// this code will try to write a larger array than the number of channels in the buffer
+{
+	BufWr.ar( // built-in buffer writer, since we won't skip indices
+		Phasor.ar(0, [1, 0.5, 2] , 0, s.sampleRate), // basic source, multichannel expanded to 3 different ramps
+		c.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+	);
+}.plot(0.1)
+)
+// check the Post Window, you get told off!
+::
+
+strong::Example 3: Common Error, multichannel expansion of the index (phase) input::
+code::
+// this code will try to multichannel expand the index(phase) input.
+// allocate a stereo buffer
+c = Buffer.alloc(s, s.sampleRate,2);
+
+(
+{
+	BufWr.ar( // built-in buffer writer, since we won't skip indices
+		Phasor.ar(0, [1, 2] , 0, s.sampleRate), // basic source, multichannel expanded to 2 different ramps
+		c.bufnum,
+		Phasor.ar(0, [1, 2] , 0, s.sampleRate), // trying two different rates of writing, same speed per input
+	);
+	BufRd.ar(
+		2,
+		c.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),// reading at one sample per sample
+		0,
+		1
+	);
+}.plot(0.1)
+) // if that was working we would expect 2 parallel lines, the 2nd perforated since we skip at the same speed than the values...
+::
+
+subsection:: The Main Differences between BufWr and IBufWr
+
+The helpfile of link::Classes/IBufWr:: explains clearly the need of a buffer writing UGen that would not leave unfilled indices should the index(phase) input was not contiguous, and illustrates it with classic musical examples. The addition of the interpolating filling has a few consequences on slight different behaviours between the objects, namely variable CPU taxing, a one-sample lag, and the need of a pausing mechanism.
+
+strong:: Variable CPU taxing::
+
+link::Classes/IBufWr:: needs to check if there is an index or more that has been skipped, which implies some branching in the code, which takes CPU time. Even at one-sample-per-sample writing speed, it is less efficient than link::Classes/BufWr:: because of that check.
+
+code::
+// declare a buffer
+b = Buffer.alloc(s, s.sampleRate);
+
+// declares a Synth for each writing UGen with potential writing rates
+(
+SynthDef(\testBufWr,{
+	arg rate = 1;
+	var source = SinOsc.ar(200,0,0.0001);
+	var write_index = Phasor.ar(0, rate , 0, s.sampleRate);
+	BufWr.ar(source, b.bufnum, write_index);
+	Out.ar(0,BufRd.ar(1,b.bufnum,write_index,0, 1));
+}).send;
+
+SynthDef(\testIBufWr,{
+	arg rate = 1, interp = 0;
+	var source = SinOsc.ar(200,0,0.0001);
+	var write_index = Phasor.ar(0, rate , 0, s.sampleRate);
+	IBufWr.ar(source, b.bufnum, write_index, interp);
+	Out.ar(0,BufRd.ar(1,b.bufnum,write_index,0, 1));
+}).send;
+)
+
+//create 100 instances of BufWr, observe the server CPU
+(
+b.zero;
+g = Group.new;
+100.do({Synth(\testBufWr , target:g)});
+)
+
+// Free them
+g.free
+
+//create 100 instances of IBufWr with no interpolation, simply sampling-and-holding between skipped indices, observe the server CPU
+(
+b.zero;
+g = Group.new;
+100.do({Synth(\testIBufWr , target:g)})
+)
+
+// worse by about 40%. Free them.
+g.free
+
+
+//create 100 instances of BufWr writing 10 times faster than realtime, observe the server CPU
+(
+b.zero;
+g = Group.new;
+100.do({Synth(\testBufWr, [\rate, 10], g)})
+)
+// not much has changed since nothing more is done
+g.free
+
+//create 100 instances of IBufWr writing 10 times faster than realtime, still only S&H, observe the server CPU
+(
+b.zero;
+g = Group.new;
+100.do({Synth(\testIBufWr, [\rate, 10], g)})
+)
+// now the 10 sample writing per sample start to hit the performance
+g.free
+
+//create 100 instances of IBufWr writing 10 times faster than realtime, this time with linear interpolation, observe the server CPU
+(
+b.zero;
+g = Group.new;
+100.do({Synth(\testIBufWr, [\rate, 10, \interp, 1], g)})
+)
+// now the interpolation hits even more.
+g.free
+::
+
+strong:: 1 sample late::
+
+The way link::Classes/IBufWr:: interpolates is by making the difference between indices. What this implies is that at the end of a vector, the known value of the last sample will not be known until the first value of the next vector. In a code where the writing happens right before the playing, it creates a whole in the output. The discriminating ear will have heard that in the previous examples above. This is in fact written as soon as possible, as one can see in the example below:
+
+code::
+b = Buffer.alloc(s, 200);
+(
+b.zero;
+{
+	IBufWr.ar(
+		Phasor.ar(0, 1 , 0, s.sampleRate),// writing values, incremented one sample per sample
+		b.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),// writes one sample per sample
+		1,
+		0.5
+	);
+	BufRd.ar(
+		1,
+		b.bufnum,
+		Phasor.ar(0, 1 , 0, s.sampleRate),
+		0,
+		1
+	);
+}.plot(130/44100)
+)
+// the plot shows playback holes at the end of buffer
+// but if the buffer is drawn, there are no wholes!
+b.plot
+::
+
+strong::negative index::
+
+A feature of link::Classes/IBufWr:: is that the writing can be paused at any time, by providing negative indices. Once the writing starts again, the first index is not interpolated from the previous positive entry.
