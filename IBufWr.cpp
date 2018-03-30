@@ -1,3 +1,8 @@
+// IBufWr, an interpolating buffer writer
+// Pierre Alexandre Tremblay, 2018
+// porting from the bespoke Max object ipoke~ v4.1 (http://www.no-tv.org/MaxMSP/)
+// thanks to the FluCoMa project funded by the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 725899)
+
 #include "SC_PlugIn.h"
 
 static InterfaceTable *ft;
@@ -105,7 +110,7 @@ void IBufWr_next(IBufWr *unit, int n) {
           }
         }
         else {
-          index = wrap_index((long)(index_tampon + 0.5),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
+          index = wrap_index((long)(index_tampon),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
 
           if (index_precedent < 0) {                                    // if it is the first index to write, resets the averaging and the values
             index_precedent = index;
@@ -207,7 +212,7 @@ void IBufWr_next(IBufWr *unit, int n) {
           }
         }
         else {
-          index = wrap_index((long)(index_tampon + 0.5),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
+          index = wrap_index((long)(index_tampon),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
 
           if (index_precedent < 0) {                                    // if it is the first index to write, resets the averaging and the values
             index_precedent = index;
@@ -285,7 +290,7 @@ void IBufWr_next(IBufWr *unit, int n) {
           }
         }
         else {
-          index = wrap_index((long)(index_tampon + 0.5),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
+          index = wrap_index((long)(index_tampon),bufFrames);        // round the next index and make sure he is in the buffer's boundaries
 
           if (index_precedent < 0) {                                    // if it is the first index to write, resets the averaging and the values
             index_precedent = index;
@@ -392,7 +397,7 @@ void IBufWr_next(IBufWr *unit, int n) {
           }
         }
         else {
-          index = wrap_index((long)(index_tampon + 0.5),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
+          index = wrap_index((long)(index_tampon),bufFrames);            // round the next index and make sure he is in the buffer's boundaries
 
           if (index_precedent < 0) {                                    // if it is the first index to write, resets the averaging and the values
             index_precedent = index;
