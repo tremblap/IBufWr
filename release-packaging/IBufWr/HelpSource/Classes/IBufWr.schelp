@@ -28,7 +28,7 @@ Control rate input for the index at which the values have to be written. These a
 ARGUMENT:: interp
 The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 uses a linear interpolation of each value between indices. This can be changed at kr.
 
-ARGUMENT:: overdub
+ARGUMENT:: feedback
 The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
 
 returns:: nothing
@@ -48,7 +48,7 @@ Audio rate input for the index at which the values have to be written. These are
 ARGUMENT:: interp
 The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 uses a linear interpolation of each value between indices. This can be changed at kr.
 
-ARGUMENT:: overdub
+ARGUMENT:: feedback
 The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
 
 returns:: nothing
@@ -66,7 +66,7 @@ EXAMPLES::
 
 For a more detailed explanation and thorough justification of the usefulness of this object, please see the extensive link::Guides/BufferWritingGuide::
 
-STRONG:: Basic Usage: Comparing BufWr and IBufwr::
+STRONG:: Basic Usage: Comparing BufWr and IBufWr::
 
 code::
 (
@@ -82,7 +82,7 @@ c.zero;
 // write both of them at 10x real time, read at 10x real time
 {
 	var source = SinOsc.ar(200,0,0.05);
-	var write_index = Phasor.ar(0, 10 , 0, s.sampleRate);
+	var write_index = Phasor.ar(0, 10 , 0, b.numFrames);
 	BufWr.ar(
 		source,
 		b.bufnum,
@@ -110,10 +110,10 @@ b.getn(0,31, {|msg| msg.postln});
 c.getn(0,31, {|msg| msg.postln});
 
 //playing at the same speed is ok if you are lucky enough to fall on the written index
-{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 10 , 0, s.sampleRate),0,1)}.play
+{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 10 , 0, b.numFrames),0,1)}.play
 
-// but it gets nasty if you change the speed of playback
-{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 9 , 0, s.sampleRate),0,1)}.play
+// but it gets nasty if you change the speed of playback, especially if you read faster than the writing was done, because of these empty indices skipped in the writing process.
+{BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 11 , 0, b.numFrames),0,1)}.play
 
 ::
 
@@ -137,7 +137,7 @@ x = d.play(true, 0.1)
 (
 y = {arg gain = 0.5, dur = 1, feedback = 0, interp = 0;
 	var delout, index;
-	index = Phasor.ar(0, dur.reciprocal, 0, s.sampleRate);
+	index = Phasor.ar(0, dur.reciprocal, 0, b.numFrames);
 	delout = BufRd.ar(1,b.bufnum,index,0,1);
 	IBufWr.ar(In.ar(0,1) * gain, b.bufnum, index, interp, feedback);
 	[0, delout]}.play(addAction:'addToTail');
@@ -197,7 +197,6 @@ x = d.play(true, 0.1)
 // add a basic delay after using the built-in DelayN, 6dB lower -- feedbback does not work, needs a block delay (InFeedback)
 y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),0.2,0.2)]}.play(addAction:'addToTail')
 
-
 // so free that
 y.free
 
@@ -208,28 +207,30 @@ b.zero;
 y = {
 	arg gain = 1, dur = 1, feedback = 0.7, freq=2000;
 	var delout, index;
-    index = Phasor.ar(0, dur.reciprocal, 0, s.sampleRate);
+    index = Phasor.ar(0, dur.reciprocal, 0, b.numFrames);
 	delout = BufRd.ar(1, b.bufnum, index,0,1);
 	BufWr.ar(BPF.ar((In.ar(0) * gain) + (delout * feedback),freq,1), b.bufnum, index);
 	[0,delout];
 }.play(addAction:'addToTail')
 )
 
-// ...but gets nasty when the duration is changed
-y.set(\dur, 2.111)
+// ...but gets nasty when the duration is changed, especially when shorter than the original, as it skips samples and most probably reads in these samples skipped at writing time...
+y.set(\dur, 0.91111)
 x.free
 
 y.free
 b.zero;
 
 // this works better using IBufWr
-(
+// start the sound source
 x = d.play(true, 0.1);
 
+// start the delay
+(
 y = {
 	arg gain = 1, dur = 1, feedback = 0.7, interp = 1, freq=2000, lag = 0;
 	var delout, index;
-	index = Phasor.ar(0, Ramp.kr(dur.reciprocal,lag), 0, s.sampleRate);
+	index = Phasor.ar(0, Ramp.kr(dur.reciprocal,lag), 0, b.numFrames);
 	delout = BufRd.ar(1, b.bufnum, index,0,1);
 	IBufWr.ar(BPF.ar((In.ar(0) * gain) + (delout * feedback),freq,1),b.bufnum,index,interp);
 	[0,delout];
@@ -237,7 +238,7 @@ y = {
 )
 
 // much better!
-y.set(\dur, 2.111)
+y.set(\dur, 0.91111)
 
 // and more fun - set a 400 ms filtered looper
 y.set(\gain, 0);
@@ -268,4 +269,30 @@ x.free
 )
 
 y.free
+::
+
+STRONG:: A kr example: using a synchronously mutating stereo buffer as sequencer::
+
+code::
+// allocate a small buffer for the sequence
+e= Buffer.alloc(s,1000,2)
+
+// start the fun!
+(
+{
+	// each second an impulse selects a index to write a random value in each channels, interpolating on the way
+	IBufWr.kr(LFNoise0.kr([1,1]),e.bufnum,Impulse.kr(1,0,LFNoise0.kr(1).range(0,e.numFrames),-1));
+
+	// you could 'quantize' the index/phase by rouding the range out to a subdivision of you choice... but the grid is boring, no?
+
+	// the mutating buffer is used as an lfo to sequence an oscillator
+	SinOsc.ar(BufRd.ar(2,e.bufnum,Phasor.ar(0,0.02,0,e.numFrames),0,1).exprange(110,440),0,0.1);
+}.play
+)
+
+// plot regularly to enjoy the sequence
+e.plot
+
+// when it's too much, zero the lfo buffer
+e.zero
 ::

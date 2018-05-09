@@ -17,10 +17,10 @@ These instructions are modified from the amazingly streamlined UGen writing tuto
 1. Download the SuperCollider source
 2. Create build directory
   1. `cd` to the folder where IBufWr is
-  2. create a `/build` directory
+  2. create a `build` directory
   3. `cd` into it
 3. Set the compiler options and build
-  4. set the make parameters by typing `cmake -DSC_PATH=/Volumes/machins/essai_cpp/supercollider-ugen/SuperCollider-Source -DCMAKE_BUILD_TYPE=Release ..`
+  4. set the make parameters by typing `cmake -DSC_PATH=PATH_TO_SUPERCOLLIDER_SOURCE -DCMAKE_BUILD_TYPE=Release ..`
   5. type `make`, it should compile.
 6. once it is done, install the Ugen and its Declaration by moving them in the `release-packaging/IBufWr/classes` and 'release-packaging/IBufWr/plugins' respectively, then move the whole `IBufWr` folder in your `Extensions` folder.
 

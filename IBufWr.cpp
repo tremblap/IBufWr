@@ -75,7 +75,7 @@ void IBufWr_Dtor(IBufWr *unit) {
 void IBufWr_next(IBufWr *unit, int n) {
   float *inind  = IN(1);
   bool interp = (bool)(IN0(2));
-  double overdub = (double)(IN0(3));
+  double feedback = (double)(IN0(3));
 
   float *inval;
   double *valeur, *coeff, index_tampon;
@@ -95,7 +95,7 @@ void IBufWr_next(IBufWr *unit, int n) {
   coeff = unit->l_coeffs;
   nb_val = unit->l_nb_val;
 
-  if (overdub != 0.) {
+  if (feedback != 0.) {
     if (interp) {
       for (j = 0; j < n; j++) {    // dsp loop with interpolation
         index_tampon = *inind++;
@@ -103,7 +103,7 @@ void IBufWr_next(IBufWr *unit, int n) {
         if (index_tampon < 0.0) {                                            // if the writing is stopped
           if (index_precedent >= 0) {                                    // and if it is the 1st one to be stopped
             for(chan = 0; chan < nc;chan++) {
-              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * overdub) + (valeur[chan]/nb_val);        // write the average value at the last given index
+              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * feedback) + (valeur[chan]/nb_val);        // write the average value at the last given index
               valeur[chan] = 0.0;
             }
             index_precedent = -1;
@@ -130,7 +130,7 @@ void IBufWr_next(IBufWr *unit, int n) {
             }
 
             for(chan = 0; chan < nc;chan++)
-              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * overdub) + valeur[chan];// write the average value at the last index
+              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * feedback) + valeur[chan];// write the average value at the last index
 
             pas = index - index_precedent;                            // calculate the step to do
 
@@ -143,12 +143,12 @@ void IBufWr_next(IBufWr *unit, int n) {
                 for(i=(index_precedent-1);i>=0;i--)                    // fill the gap to zero
                   for(chan = 0; chan < nc;chan++){
                     valeur[chan] -= coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
                 for(i=(bufFrames-1);i>index;i--)                        // fill the gap from the top
                   for(chan = 0; chan < nc;chan++) {
                     valeur[chan] -= coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
               }
               else {                                                // if not, just fill the gaps
@@ -158,7 +158,7 @@ void IBufWr_next(IBufWr *unit, int n) {
                 for (i=(index_precedent+1); i<index; i++)
                   for(chan = 0; chan < nc;chan++) {
                     valeur[chan] += coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
               }
             }
@@ -171,12 +171,12 @@ void IBufWr_next(IBufWr *unit, int n) {
                 for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                   for(chan = 0; chan < nc;chan++) {
                     valeur[chan] += coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
                 for(i=0;i<index;i++)                            // fill the gap from zero
                   for(chan = 0; chan < nc;chan++) {
                     valeur[chan] += coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
               }
               else {                                                // if not, just fill the gaps
@@ -186,7 +186,7 @@ void IBufWr_next(IBufWr *unit, int n) {
                 for (i=(index_precedent-1); i>index; i--)
                   for(chan = 0; chan < nc;chan++) {
                     valeur[chan] -= coeff[chan];
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                   }
               }
             }
@@ -205,7 +205,7 @@ void IBufWr_next(IBufWr *unit, int n) {
         if (index_tampon < 0.0) {                                            // if the writing is stopped
           if (index_precedent >= 0) {                                    // and if it is the 1st one to be stopped
             for(chan = 0; chan < nc;chan++) {
-              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * overdub) + (valeur[chan]/nb_val);        // write the average value at the last given index
+              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * feedback) + (valeur[chan]/nb_val);        // write the average value at the last given index
               valeur[chan] = 0.0;
             }
             index_precedent = -1;
@@ -232,7 +232,7 @@ void IBufWr_next(IBufWr *unit, int n) {
             }
 
             for(chan = 0; chan < nc;chan++)
-              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * overdub) + valeur[chan];                // write the average value at the last index
+              bufData[index_precedent * bufChannels + chan] = (bufData[index_precedent * bufChannels + chan] * feedback) + valeur[chan];                // write the average value at the last index
 
             pas = index - index_precedent;                            // calculate the step to do
 
@@ -240,30 +240,30 @@ void IBufWr_next(IBufWr *unit, int n) {
               if (pas > demivie) {                                    // is it faster to go the other way round?
                 for(i=(index_precedent-1);i>=0;i--)                // fill the gap to zero
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                 for(i=(bufFrames-1);i>index;i--)                    // fill the gap from the top
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
               }
               else {                                                // if not, just fill the gaps
                 for (i=(index_precedent+1); i<index; i++)
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
               }
             }
             else  {                                                   // if we are going down
               if ((-pas) > demivie) {                                // is it faster to go the other way round?
                 for(i=(index_precedent+1);i<bufFrames;i++)            // fill the gap to the top
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
                 for(i=0;i<index;i++)                            // fill the gap from zero
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
               }
               else {                                                // if not, just fill the gaps
                 for (i=(index_precedent-1); i>index; i--)
                   for(chan = 0; chan < nc;chan++)
-                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * overdub) + valeur[chan];
+                    bufData[i * bufChannels + chan] = (bufData[i * bufChannels + chan] * feedback) + valeur[chan];
               }
             }
 
@@ -468,7 +468,7 @@ void IBufWr_next(IBufWr *unit, int n) {
 }
 
 
-PluginLoad(IButtUGens) {
+PluginLoad(IBufWrUGens) {
   ft = inTable;
   DefineDtorUnit(IBufWr);
 }

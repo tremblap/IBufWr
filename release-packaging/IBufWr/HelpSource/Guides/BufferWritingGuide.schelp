@@ -19,14 +19,14 @@ c = Buffer.alloc(s, s.sampleRate,2);
 (
 {
 	BufWr.ar( // built-in buffer writer, since we won't skip indices
-		Phasor.ar(0, [1, 0.5] , 0, s.sampleRate), // basic source, multichannel expanded to 2 different ramps
+		Phasor.ar(0, [1, 0.5] , 0, c.numFrames), // basic source, multichannel expanded to 2 different ramps
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
+		Phasor.ar(0, 1 , 0, c.numFrames),
 	);
 	BufRd.ar(
 		2,
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),// reading at one sample per sample
+		Phasor.ar(0, 1 , 0, c.numFrames),// reading at one sample per sample
 		0,
 		1
 	);
@@ -43,9 +43,9 @@ c = Buffer.alloc(s, s.sampleRate,2);
 // this code will try to write a larger array than the number of channels in the buffer
 {
 	BufWr.ar( // built-in buffer writer, since we won't skip indices
-		Phasor.ar(0, [1, 0.5, 2] , 0, s.sampleRate), // basic source, multichannel expanded to 3 different ramps
+		Phasor.ar(0, [1, 0.5, 2] , 0, c.numFrames), // basic source, multichannel expanded to 3 different ramps
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
+		Phasor.ar(0, 1 , 0, c.numFrames),
 	);
 }.plot(0.1)
 )
@@ -61,14 +61,14 @@ c = Buffer.alloc(s, s.sampleRate,2);
 (
 {
 	BufWr.ar( // built-in buffer writer, since we won't skip indices
-		Phasor.ar(0, [1, 2] , 0, s.sampleRate), // basic source, multichannel expanded to 2 different ramps
+		Phasor.ar(0, [1, 2] , 0, c.numFrames), // basic source, multichannel expanded to 2 different ramps
 		c.bufnum,
-		Phasor.ar(0, [1, 2] , 0, s.sampleRate), // trying two different rates of writing, same speed per input
+		Phasor.ar(0, [1, 2] , 0, c.numFrames), // trying two different rates of writing, same speed per input
 	);
 	BufRd.ar(
 		2,
 		c.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),// reading at one sample per sample
+		Phasor.ar(0, 1 , 0, c.numFrames),// reading at one sample per sample
 		0,
 		1
 	);
@@ -93,7 +93,7 @@ b = Buffer.alloc(s, s.sampleRate);
 SynthDef(\testBufWr,{
 	arg rate = 1;
 	var source = SinOsc.ar(200,0,0.0001);
-	var write_index = Phasor.ar(0, rate , 0, s.sampleRate);
+	var write_index = Phasor.ar(0, rate , 0, b.numFrames);
 	BufWr.ar(source, b.bufnum, write_index);
 	Out.ar(0,BufRd.ar(1,b.bufnum,write_index,0, 1));
 }).send;
@@ -101,7 +101,7 @@ SynthDef(\testBufWr,{
 SynthDef(\testIBufWr,{
 	arg rate = 1, interp = 0;
 	var source = SinOsc.ar(200,0,0.0001);
-	var write_index = Phasor.ar(0, rate , 0, s.sampleRate);
+	var write_index = Phasor.ar(0, rate , 0, b.numFrames);
 	IBufWr.ar(source, b.bufnum, write_index, interp);
 	Out.ar(0,BufRd.ar(1,b.bufnum,write_index,0, 1));
 }).send;
@@ -166,16 +166,16 @@ b = Buffer.alloc(s, 200);
 b.zero;
 {
 	IBufWr.ar(
-		Phasor.ar(0, 1 , 0, s.sampleRate),// writing values, incremented one sample per sample
+		Phasor.ar(0, 1 , 0, b.numFrames),// writing values, incremented one sample per sample
 		b.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),// writes one sample per sample
+		Phasor.ar(0, 1 , 0, b.numFrames),// writes one sample per sample
 		1,
 		0.5
 	);
 	BufRd.ar(
 		1,
 		b.bufnum,
-		Phasor.ar(0, 1 , 0, s.sampleRate),
+		Phasor.ar(0, 1 , 0, b.numFrames),
 		0,
 		1
 	);
