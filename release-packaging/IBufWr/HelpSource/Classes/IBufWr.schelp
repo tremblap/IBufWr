@@ -202,7 +202,7 @@ d = Buffer.read(s, p);
 x = d.play(true, 0.1)
 
 // add a basic delay after using the built-in DelayN, 6dB lower -- feedbback does not work, needs a block delay (InFeedback)
-y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),1,1)]}.play(addAction:'addToTail')
+y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),0.5,0.5)]}.play(addAction:'addToTail')
 
 // so free that
 y.free
@@ -282,7 +282,7 @@ e= Buffer.alloc(s,1000,2);
 (
 {
 	// each second an impulse selects a index to write a random value in each channels, interpolating on the way
-	IBufWr.kr(LFNoise0.kr([1,1]),e.bufnum,Impulse.kr(1,0,LFNoise0.kr(1).range(0,e.numFrames),-1));
+	IBufWr.kr(LFNoise0.kr([1,1]),e.bufnum,LFNoise0.kr(1).range(0,e.numFrames));
 
 	// you could 'quantize' the index/phase by rouding the range out to a subdivision of you choice... but the grid is boring, no?
 

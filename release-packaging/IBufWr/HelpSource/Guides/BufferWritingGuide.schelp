@@ -141,7 +141,7 @@ g = Group.new;
 100.do({Synth(\testIBufWr , target:g)})
 )
 
-// worse by about 40%. Free them.
+// worse by about 25%. Free them.
 g.free
 
 
@@ -218,23 +218,29 @@ A feature of link::Classes/IBufWr:: is that the writing can be paused at any tim
 code::
 s.boot;
 
-//allocate a second-long buffer
+//allocate a buffer...
 b = Buffer.alloc(s, s.sampleRate/10);
+// and fill it with a constant
+b.fill(0,b.numFrames,2000);
+// plot to check
+b.plot;
 
-//writing with a switch on the index every 250ms
+//writing with a switch on the index every 25ms
 (
-b.zero;
+// b.zero;
 {
 	IBufWr.ar(
 		Phasor.ar(0, 1 , 0, b.numFrames),// writing values, incremented one sample per sample
 		b.bufnum,
 		LFPulse.ar(40,mul:Phasor.ar(0, 1 , 1, b.numFrames+1),add:-1), // writes one sample per sample when the pulse is up, otherwise is stable at -1
-		1
+		0
 	);
 }.plot(0.1)
 )
+// what we see in this plot is the writing index
 
-b.plot
+// plot the buffer: observe it has left the constant values untouched when the index was -1
+b.plot;
 
+// clear up
 b.free
-::

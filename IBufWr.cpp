@@ -194,8 +194,8 @@ void IBufWr_next(IBufWr *unit, int n) {
             for(chan = 0; chan < nc;chan++)
               valeur[chan] = IN(chan+4)[j];                                    // transfer the new previous value
           }
+          index_precedent = index;                                        // transfer the new previous address
         }
-        index_precedent = index;                                        // transfer the new previous address
       }
     }
     else {
@@ -270,8 +270,8 @@ void IBufWr_next(IBufWr *unit, int n) {
             for(chan = 0; chan < nc;chan++)
               valeur[chan] = IN(chan+4)[j];                            // transfer the new previous value
           }
+          index_precedent = index;                                        // transfer the new previous address
         }
-        index_precedent = index;                                        // transfer the new previous address
       }
     }
   }
@@ -379,8 +379,8 @@ void IBufWr_next(IBufWr *unit, int n) {
             for(chan = 0; chan < nc;chan++)
               valeur[chan] = IN(chan+4)[j];                         // transfer the new previous value
           }
+          index_precedent = index;                                        // transfer the new previous address
         }
-        index_precedent = index;                                        // transfer the new previous address
       }
     }
     else {
@@ -457,8 +457,8 @@ void IBufWr_next(IBufWr *unit, int n) {
             for(chan = 0; chan < nc;chan++)
               valeur[chan] = IN(chan+4)[j];                        // transfer the new previous value
           }
+          index_precedent = index;                                        // transfer the new previous address
         }
-        index_precedent = index;                                        // transfer the new previous address
       }
     }
   }
