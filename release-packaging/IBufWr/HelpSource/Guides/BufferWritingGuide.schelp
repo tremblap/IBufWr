@@ -13,6 +13,8 @@ Both link::Classes/BufWr:: and link::Classes/IBufWr:: behave the same way, which
 
 strong::Example 1: Basic Stereo Buffer Writing::
 code::
+s.boot;
+
 // allocate a stereo buffer
 c = Buffer.alloc(s, s.sampleRate,2);
 
@@ -32,10 +34,15 @@ c = Buffer.alloc(s, s.sampleRate,2);
 	);
 }.plot(0.1)
 )
+
+//clean up
+c.free;
 ::
 
 strong::Example 2: Common Error, too large an input array::
 code::
+s.boot;
+
 // allocate a stereo buffer
 c = Buffer.alloc(s, s.sampleRate,2);
 
@@ -50,10 +57,15 @@ c = Buffer.alloc(s, s.sampleRate,2);
 }.plot(0.1)
 )
 // check the Post Window, you get told off!
+
+//clean up
+c.free;
 ::
 
 strong::Example 3: Common Error, multichannel expansion of the index (phase) input::
 code::
+s.boot;
+
 // this code will try to multichannel expand the index(phase) input.
 // allocate a stereo buffer
 c = Buffer.alloc(s, s.sampleRate,2);
@@ -74,6 +86,9 @@ c = Buffer.alloc(s, s.sampleRate,2);
 	);
 }.plot(0.1)
 ) // if that was working we would expect 2 parallel lines, the 2nd perforated since we skip at the same speed than the values...
+
+//clean up
+c.free;
 ::
 
 subsection:: The Main Differences between BufWr and IBufWr
@@ -85,6 +100,8 @@ strong:: Variable CPU taxing::
 link::Classes/IBufWr:: needs to check if there is an index or more that has been skipped, which implies some branching in the code, which takes CPU time. Even at one-sample-per-sample writing speed, it is less efficient than link::Classes/BufWr:: because of that check.
 
 code::
+s.boot;
+
 // declare a buffer
 b = Buffer.alloc(s, s.sampleRate);
 
@@ -154,6 +171,9 @@ g = Group.new;
 )
 // now the interpolation hits even more.
 g.free
+
+//free the buffer
+b.free;
 ::
 
 strong:: 1 sample late::
@@ -161,7 +181,12 @@ strong:: 1 sample late::
 The way link::Classes/IBufWr:: interpolates is by making the difference between indices. What this implies is that at the end of a vector, the known value of the last sample will not be known until the first value of the next vector. In a code where the writing happens right before the playing, it creates a whole in the output. The discriminating ear will have heard that in the previous examples above. This is in fact written as soon as possible, as one can see in the example below:
 
 code::
+s.boot;
+
+//allocate a small buffer
 b = Buffer.alloc(s, 200);
+
+//writing at the same time as reading
 (
 b.zero;
 {
@@ -189,3 +214,27 @@ b.plot
 strong::negative index::
 
 A feature of link::Classes/IBufWr:: is that the writing can be paused at any time, by providing negative indices. Once the writing starts again, the first index is not interpolated from the previous positive entry.
+
+code::
+s.boot;
+
+//allocate a second-long buffer
+b = Buffer.alloc(s, s.sampleRate/10);
+
+//writing with a switch on the index every 250ms
+(
+b.zero;
+{
+	IBufWr.ar(
+		Phasor.ar(0, 1 , 0, b.numFrames),// writing values, incremented one sample per sample
+		b.bufnum,
+		LFPulse.ar(40,mul:Phasor.ar(0, 1 , 1, b.numFrames+1),add:-1), // writes one sample per sample when the pulse is up, otherwise is stable at -1
+		1
+	);
+}.plot(0.1)
+)
+
+b.plot
+
+b.free
+::

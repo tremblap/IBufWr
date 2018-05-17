@@ -69,6 +69,8 @@ For a more detailed explanation and thorough justification of the usefulness of 
 STRONG:: Basic Usage: Comparing BufWr and IBufWr::
 
 code::
+s.boot;
+
 (
 // define 2 small buffers
 b = Buffer.alloc(s, s.sampleRate);
@@ -115,12 +117,16 @@ c.getn(0,31, {|msg| msg.postln});
 // but it gets nasty if you change the speed of playback, especially if you read faster than the writing was done, because of these empty indices skipped in the writing process.
 {BufRd.ar(1,[b.bufnum, c.bufnum],Phasor.ar(0, 11 , 0, b.numFrames),0,1)}.play
 
+// clean up
+b.free;c.free;
 ::
 
 
 STRONG:: A More Musical Example: Emulating a Resampling Digital Delay::
 
 code::
+s.boot;
+
 //create a one second buffer
 b = Buffer.alloc(s, s.sampleRate);
 
@@ -174,14 +180,15 @@ y.set(\gain, 0)
 x.free
 y.set(\feedback, 0.8)
 
-// free the delay
-y.free
-b.free
+// free the delay and both buffers
+y.free; b.free; d.free;
 ::
 
 STRONG:: Yet Another Musical Example: Processing Within the Feedback Loop::
 
 code::
+s.boot;
+
 //create a one second buffer
 b = Buffer.alloc(s, s.sampleRate);
 
@@ -195,7 +202,7 @@ d = Buffer.read(s, p);
 x = d.play(true, 0.1)
 
 // add a basic delay after using the built-in DelayN, 6dB lower -- feedbback does not work, needs a block delay (InFeedback)
-y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),0.2,0.2)]}.play(addAction:'addToTail')
+y = {arg gain = 0.5, feed = 0.5; [0, DelayN.ar((In.ar(0) * gain) + (In.ar(1) * feed),1,1)]}.play(addAction:'addToTail')
 
 // so free that
 y.free
@@ -216,10 +223,10 @@ y = {
 
 // ...but gets nasty when the duration is changed, especially when shorter than the original, as it skips samples and most probably reads in these samples skipped at writing time...
 y.set(\dur, 0.91111)
-x.free
+x.free;
 
-y.free
-b.zero;
+// clean up
+y.free; b.zero;
 
 // this works better using IBufWr
 // start the sound source
@@ -241,9 +248,7 @@ y = {
 y.set(\dur, 0.91111)
 
 // and more fun - set a 400 ms filtered looper
-y.set(\gain, 0);
-y.set(\feedback, 1);
-y.set(\dur, 0.4);
+y.set(\gain, 0, \feedback, 1, \dur, 0.4);
 
 // send some stuff in, then cut the source
 y.set(\gain, 1);
@@ -253,29 +258,25 @@ y.set(\gain, 0);
 y.set(\dur, 0.8)
 
 // with smoothing
-(
-y.set(\gain, 1);
-y.set(\lag, 0.4);
-y.set(\dur, 0.2);
-y.set(\feedback, 0.7);
-)
+y.set(\gain, 1, \lag, 0.4, \dur, 0.2, \feedback, 0.7);
 
 // cool stop!
 (
-y.set(\feedback, 0.9);
-y.set(\lag, 2);
-y.set(\dur, 2);
-x.free
+y.set(\feedback, 0.9, \lag, 2, \dur, 2);
+x.free;
 )
 
-y.free
+//clean up
+y.free; b.free; d.free;
 ::
 
 STRONG:: A kr example: using a synchronously mutating stereo buffer as sequencer::
 
 code::
+s.boot;
+
 // allocate a small buffer for the sequence
-e= Buffer.alloc(s,1000,2)
+e= Buffer.alloc(s,1000,2);
 
 // start the fun!
 (
@@ -291,8 +292,11 @@ e= Buffer.alloc(s,1000,2)
 )
 
 // plot regularly to enjoy the sequence
-e.plot
+e.plot;
 
 // when it's too much, zero the lfo buffer
-e.zero
+e.zero;
+
+// clean up
+e.free;
 ::
