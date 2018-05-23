@@ -4,8 +4,6 @@ v.1 by Pierre Alexandre Tremblay (2018)
 #### Description
 This is a SuperCollider (https://supercollider.github.io/) porting of the bespoke Max (https://cycling74.com/products/max) object ipoke~ v4.1 (http://www.no-tv.org/MaxMSP/), which allows to write to the server buffers without leaving unfilled indices when writing faster than realtime.
 
-This port was made possible thanks to the FluCoMa project (http://www.flucoma.org/) funded by the European Research Council (https://erc.europa.eu/) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 725899)
-
 #### Why was this utility needed
 It was impossible to emulate the musical behaviour of bespoke resampling digital delay pedals in Max and SuperCollider. Now it is.
 
@@ -18,3 +16,8 @@ It was impossible to emulate the musical behaviour of bespoke resampling digital
 The helpfile gives 3 typical usage of the UGen, and there is a further document that gives more details on the justification, implementation, and example code.
 
 Comments, suggestions and bug reports are welcome.
+
+##### Acknowledgements
+This port was made possible thanks to the FluCoMa project (http://www.flucoma.org/) funded by the European Research Council (https://erc.europa.eu/) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 725899)
+
+Thanks to Gerard Roma and Owen Green for their input.
