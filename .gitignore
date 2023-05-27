@@ -3,3 +3,4 @@ build
 release-packaging/IBufWr/classes
 release-packaging/IBufWr/plugins
 .vscode
+releases

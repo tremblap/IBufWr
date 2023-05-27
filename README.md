@@ -19,8 +19,10 @@ These instructions are modified from the amazingly streamlined UGen writing tuto
   3. `cd` into it
 3. Set the compiler options and build
   4. set the make parameters by typing `cmake -DSC_PATH=PATH_TO_SUPERCOLLIDER_SOURCE -DCMAKE_BUILD_TYPE=Release ..`
-  5. type `make`, it should compile.
-6. once it is done, install the Ugen and its Declaration by moving them in the `release-packaging/IBufWr/classes` and 'release-packaging/IBufWr/plugins' respectively, then move the whole `IBufWr` folder in your `Extensions` folder.
+    5. for a MacOS fat binary add `-D CMAKE_OSX_ARCHITECTURES="x86_64;arm64"` - or for a personal copy the option `-DCMAKE_CXX_FLAGS=-march=native` will optimise as fast as the machine will go, at the cost of compatibility with other hardware.
+  6. type `make`, it should compile.
+7. once it is done, install the Ugen and its Declaration by moving them in the `release-packaging/IBufWr/classes` and 'release-packaging/IBufWr/plugins' respectively, then move the whole `IBufWr` folder in your `Extensions` folder.
+  8. for MacOS this is where code signature and notarization has to happen...
 
 #### Enjoy! Comments, suggestions and bug reports are welcome.
 
