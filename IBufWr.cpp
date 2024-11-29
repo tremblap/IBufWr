@@ -98,8 +98,8 @@ void IBufWr_next(IBufWr *unit, int n) {
   auto writeAverageValue = [&](long index) {
     for (long chan = 0; chan < numChannels; ++chan) {
       bufData[index * bufChannels + chan] =
-          zapgremlins((bufData[index * bufChannels + chan] * feedback) +
-                      (values[chan] / numberOfValues));
+          zapgremlins(static_cast<float>((bufData[index * bufChannels + chan]
+                      * feedback) + (values[chan] / numberOfValues)));
       values[chan] = 0.0;
     }
   };
@@ -114,8 +114,8 @@ void IBufWr_next(IBufWr *unit, int n) {
     for (long i = start; i != end; i += step) {
       for (long chan = 0; chan < numChannels; ++chan) {
         values[chan] += coefficients[chan];
-        bufData[i * bufChannels + chan] = zapgremlins(
-            (bufData[i * bufChannels + chan] * feedback) + values[chan]);
+        bufData[i * bufChannels + chan] = zapgremlins(static_cast<float>(
+            (bufData[i * bufChannels + chan] * feedback) + values[chan]));
       }
     }
   };
@@ -150,8 +150,9 @@ void IBufWr_next(IBufWr *unit, int n) {
 
         for (long chan = 0; chan < numChannels; ++chan)
           bufData[previousIndex * bufChannels + chan] = zapgremlins(
-              (bufData[previousIndex * bufChannels + chan] * feedback) +
-              values[chan]); // write the average value at the last index
+              static_cast<float>((bufData[previousIndex * bufChannels + chan]
+              * feedback) + values[chan])); // write the average value at the
+              // last index
 
         long step = index - previousIndex; // calculate the step to do
 
