@@ -113,7 +113,7 @@ void IBufWr_next(IBufWr *unit, int n) {
   auto fillGap = [&](long start, long end, long step) {
     for (long i = start; i != end; i += step) {
       for (long chan = 0; chan < numChannels; ++chan) {
-        values[chan] += coefficients[chan];
+        if (interpolate) values[chan] += coefficients[chan];
         bufData[i * bufChannels + chan] = zapgremlins(static_cast<float>(
             (bufData[i * bufChannels + chan] * feedback) + values[chan]));
       }
