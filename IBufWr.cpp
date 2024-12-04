@@ -128,7 +128,8 @@ void IBufWr_next(IBufWr *unit, int n) {
       }
     } else {
       // round the next index and make sure it is in the buffer's boundaries
-      long index = sc_wrap(static_cast<long>(indexBuffer), 0, bufFrames);
+      auto index = static_cast<long>(indexBuffer);
+      while(index >= bufFrames) index -= bufFrames; //sc_wrap was misbehaving
 
       if (previousIndex < 0) { // if it is the first index to write, resets the
                                // averaging and the values
