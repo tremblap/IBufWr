@@ -31,6 +31,9 @@ The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 
 ARGUMENT:: feedback
 The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
 
+ARGUMENT:: maxIndex
+This is the maximum index to write into the buffer. The default (-1) takes the buffer's numFrames. This can be changed at kr.
+
 returns:: nothing
 
 METHOD:: ar
@@ -50,6 +53,9 @@ The index gap filling method. 0 uses sample-and-hold for all missing indices, 1 
 
 ARGUMENT:: feedback
 The amount of previously written data to be fed back in the recording process. This allows for clean overdubbing. This can be changed at kr.
+
+ARGUMENT:: maxIndex
+This is the maximum index to write into the buffer. The default (-1) takes the buffer's numFrames. This can be changed at kr.
 
 returns:: nothing
 

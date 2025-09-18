@@ -47,17 +47,19 @@ void IBufWr_Ctor(IBufWr *unit);
 void IBufWr_Dtor(IBufWr *unit);
 void IBufWr_next(IBufWr *unit, int n);
 
+#define NUM_INS 5
+
 void IBufWr_Ctor(IBufWr *unit) {
   // declares the unit buffer number as unassigned (<0)
   unit->m_fbufnum = -1.f;
   // defines the counters and initialize them to 0
   unit->m_values = (double *)RTAlloc(unit->mWorld,
-                                     ((unit->mNumInputs - 4) * sizeof(double)));
-  memset(unit->m_values, 0, ((unit->mNumInputs - 4) * sizeof(double)));
+                                     ((unit->mNumInputs - NUM_INS) * sizeof(double)));
+  memset(unit->m_values, 0, ((unit->mNumInputs - NUM_INS) * sizeof(double)));
   // defines the coefficients and initialize them to 0
   unit->l_coeffs = (double *)RTAlloc(unit->mWorld,
-                                     ((unit->mNumInputs - 4) * sizeof(double)));
-  memset(unit->l_coeffs, 0, ((unit->mNumInputs - 4) * sizeof(double)));
+                                     ((unit->mNumInputs - NUM_INS) * sizeof(double)));
+  memset(unit->l_coeffs, 0, ((unit->mNumInputs - NUM_INS) * sizeof(double)));
   // initialize the other instance variables
   unit->m_last_index = -1;
 
@@ -77,18 +79,20 @@ void IBufWr_next(IBufWr *unit, int n) {
   auto inputIndex = IN(1);
   bool interpolate = static_cast<bool>(IN0(2));
   double feedback = static_cast<double>(IN0(3));
+  long maxIdx = static_cast<long>(IN0(4));
 
   GET_BUF // this macro, defined in SC_Unit.h, does all the sanity check, locks
           // the buffer and assigns values to bufData, bufChannels, bufFrames
-      long numChannels =
-          unit->mNumInputs - 4; // minus 4 because the arguments are all passed
-                                // after the input array
+  long numChannels = unit->mNumInputs - NUM_INS; // minus NUM_INS because the arguments are 
+                                          // all passed after the input array
 
   // other sanity check, mostly of size
   if (!checkBuffer(unit, bufData, bufChannels, numChannels, n))
     return;
 
-  double halfLife = static_cast<long>(static_cast<double>(bufFrames) * 0.5);
+  maxIdx = (maxIdx == -1) ? bufFrames :  static_cast<long>(fmin(maxIdx, bufFrames));
+
+  double halfLife = static_cast<long>(static_cast<double>(maxIdx) * 0.5);
 
   auto previousIndex = unit->m_last_index;
   auto &values = unit->m_values;
@@ -106,7 +110,7 @@ void IBufWr_next(IBufWr *unit, int n) {
 
   auto calculateCoefficients = [&](long step, int j) {
     for (long chan = 0; chan < numChannels; ++chan) {
-      coefficients[chan] = (IN(chan + 4)[j] - values[chan]) / step;
+      coefficients[chan] = (IN(chan + NUM_INS)[j] - values[chan]) / step;
     }
   };
 
@@ -129,7 +133,7 @@ void IBufWr_next(IBufWr *unit, int n) {
     } else {
       // round the next index and make sure it is in the buffer's boundaries
       auto index = static_cast<long>(indexBuffer);
-      while(index >= bufFrames) index -= bufFrames; //sc_wrap was misbehaving
+      while(index >= maxIdx) index -= maxIdx; //sc_wrap was misbehaving
 
       if (previousIndex < 0) { // if it is the first index to write, resets the
                                // averaging and the values
@@ -140,7 +144,7 @@ void IBufWr_next(IBufWr *unit, int n) {
       if (index == previousIndex) { // if the index has not moved, accumulate
                                     // the value to average later.
         for (long chan = 0; chan < numChannels; ++chan)
-          values[chan] += IN(chan + 4)[j];
+          values[chan] += IN(chan + NUM_INS)[j];
         numberOfValues += 1;
       } else {                     // if it moves
         if (numberOfValues != 1) { // is there more than one value to average
@@ -159,22 +163,22 @@ void IBufWr_next(IBufWr *unit, int n) {
 
         if (step > 0) {          // are we going up
           if (step > halfLife) { // is it faster to go the other way round?
-            step -= bufFrames;   // calculate the new number of steps
+            step -= maxIdx;   // calculate the new number of steps
             calculateCoefficients(step, j);
             // Fill the gap to zero
             fillGap(previousIndex - 1, -1, -1);
             // Fill the gap from the top
-            fillGap(bufFrames - 1, index, -1);
+            fillGap(maxIdx - 1, index, -1);
           } else { // if not, just fill the gaps
             calculateCoefficients(step, j);
             fillGap(previousIndex + 1, index, 1);
           }
         } else {                  // if we are going down
           if (-step > halfLife) { // is it faster to go the other way round?
-            step += bufFrames;    // calculate the new number of steps
+            step += maxIdx;    // calculate the new number of steps
             calculateCoefficients(step, j);
             // Fill the gap to the top
-            fillGap(previousIndex + 1, bufFrames, 1);
+            fillGap(previousIndex + 1, maxIdx, 1);
             // Fill the gap from zero
             fillGap(0, index, 1);
           } else { // if not, just fill the gaps
@@ -184,7 +188,7 @@ void IBufWr_next(IBufWr *unit, int n) {
         }
 
         for (long chan = 0; chan < numChannels; ++chan)
-          values[chan] = IN(chan + 4)[j]; // transfer the new previous value
+          values[chan] = IN(chan + NUM_INS)[j]; // transfer the new previous value
       }
       previousIndex = index; // transfer the new previous address
     }
